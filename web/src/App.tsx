@@ -12,6 +12,7 @@ import Search from "./pages/Search";
 import Trending from "./pages/Trending";
 import NotFound from "./pages/NotFound";
 import WriteBlog from "./pages/WriteBlog";
+import BlogView from "./pages/BlogView";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/search" element={<Search />} />
               <Route path="/trending" element={<Trending />} />
               <Route path="/write" element={<WriteBlog />} />
+              <Route path="/blog/:id" element={<BlogView />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

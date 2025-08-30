@@ -22,8 +22,9 @@ const Home = () => {
           api.getTrendingBlogs({ limit: 5 }),
         ]);
         
-        setBlogs(blogsResponse.data);
-        setTrendingBlogs(trendingResponse);
+        setBlogs(blogsResponse.data?.data);
+        console.log(blogsResponse);
+        setTrendingBlogs(trendingResponse.data);
       } catch (error) {
         toast({
           title: "Error",
