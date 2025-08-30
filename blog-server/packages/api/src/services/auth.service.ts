@@ -44,7 +44,7 @@ export class AuthService {
     await user.save();
 
     // Construct the full verification URL for the email
-    const verificationUrl = `https://api.meghdev.tech/${config.apiPrefix}/auth/verify/${verificationToken}`;
+    const verificationUrl = `https://api.meghdev.tech${config.apiPrefix}/auth/verify/${verificationToken}`;
 
     await sendEmail({
       to: user.email,
