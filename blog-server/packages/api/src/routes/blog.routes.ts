@@ -16,6 +16,7 @@ import {
 } from '@devnovate/shared/dtos/blog.dto';
 import { USER_ROLES } from '@devnovate/shared/constants';
 import { idempotencyMiddleware } from '../middlewares/idempotency.middleware';
+import { transformTags } from '../middlewares/transform.middleware';
 
 const router = Router();
 const outboxService = new OutboxService();
@@ -34,10 +35,17 @@ router.post(
   '/',
   idempotencyMiddleware,
   upload.single('coverImage'),
+  transformTags,
   validateBody(CreateBlogSchema),
   blogController.createBlog
 );
-router.patch('/:id', upload.single('coverImage'), validateBody(UpdateBlogSchema), blogController.updateBlog);
+router.patch(
+  '/:id',
+  upload.single('coverImage'),
+  transformTags,
+  validateBody(UpdateBlogSchema),
+  blogController.updateBlog
+);
 router.post('/:id/submit', blogController.submitBlog);
 
 router.post('/:id/like', blogController.likeBlog);

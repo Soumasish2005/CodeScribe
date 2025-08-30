@@ -34,9 +34,9 @@ export class BlogService {
     authorId: Types.ObjectId,
     file?: Express.Multer.File
   ): Promise<IBlog> {
-    let coverImageUrl: string | undefined;
+    let coverImageKey: string | undefined;
     if (file) {
-      coverImageUrl = await this.uploadService.uploadFile(file);
+      coverImageKey = await this.uploadService.uploadFile(file);
     }
     const { title, content, tags } = blogData;
 
@@ -50,7 +50,7 @@ export class BlogService {
       tags,
       author: authorId,
       status: BLOG_STATUS.DRAFT,
-      coverImageUrl,
+      coverImageKey,
     });
 
     await blog.save();
@@ -64,7 +64,7 @@ export class BlogService {
     const blog = await Blog.findById(blogId);
 
     if (!blog) throw new ApiError(StatusCodes.NOT_FOUND, 'Blog not found');
-    if (blog.author.toString() !== authorId.toString()) {
+    if (blog.author !== authorId) {
       throw new ApiError(StatusCodes.FORBIDDEN, 'You are not the author of this blog');
     }
     if (blog.status !== BLOG_STATUS.DRAFT) {
@@ -73,29 +73,42 @@ export class BlogService {
 
     blog.status = BLOG_STATUS.PENDING;
     await blog.save();
-    return blog;
+    return blog as IBlog;
   }
 
   /**
    * Updates an existing blog post. Only accessible by the author for drafts or pending posts.
    */
-  public async updateBlog(blogId: string, updateData: UpdateBlogDto, authorId: Types.ObjectId): Promise<IBlog> {
+  public async updateBlog(
+    blogId: string,
+    updateData: UpdateBlogDto,
+    authorId: Types.ObjectId,
+    file?: Express.Multer.File
+  ): Promise<IBlog> {
     const blog = await Blog.findById(blogId);
 
     if (!blog) throw new ApiError(StatusCodes.NOT_FOUND, 'Blog not found');
-    if (blog.author.toString() !== authorId.toString()) {
+    if (blog.author !== authorId) {
       throw new ApiError(StatusCodes.FORBIDDEN, 'You are not authorized to update this blog');
     }
     const editableStatuses: BlogStatus[] = [BLOG_STATUS.DRAFT, BLOG_STATUS.PENDING];
     if (!editableStatuses.includes(blog.status as BlogStatus)) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Only drafts or pending blogs can be edited');
     }
+
+    if (file) {
+      // If an old image exists, delete it from S3 to prevent orphaned files
+      if (blog.coverImageKey) {
+        await this.uploadService.deleteFile(blog.coverImageKey);
+      }
+      blog.coverImageKey = await this.uploadService.uploadFile(file);
+    }
+
     if (updateData.content) {
       const parsedContent = await marked.parse(updateData.content);
       updateData.content = DOMPurify.sanitize(parsedContent);
     }
 
-    Object.assign(blog, updateData);
     Object.assign(blog, updateData);
     await blog.save();
     return blog;
@@ -109,23 +122,23 @@ export class BlogService {
     const blog = await Blog.findById(blogId).populate('author', 'name').lean();
     if (!blog) throw new ApiError(StatusCodes.NOT_FOUND, 'Blog not found');
 
-    const isAuthor = currentUser && blog.author._id.toString() === (currentUser._id as string).toString();
-    const isAdmin = currentUser && currentUser.roles.includes(USER_ROLES.ADMIN);
+    const isAuthor = currentUser?._id === blog.author._id;
+    const isAdmin = currentUser?.roles.includes(USER_ROLES.ADMIN) ?? false;
 
     if (blog.status !== BLOG_STATUS.PUBLISHED && !isAuthor && !isAdmin) {
       throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have permission to view this blog');
     }
 
+    if (blog.coverImageKey) {
+      (blog as any).coverImageUrl = await this.uploadService.getPresignedUrl(blog.coverImageKey);
+    }
+
     // Asynchronously update view count via event to keep this endpoint fast
+    const userIdForEvent = currentUser?._id;
     await this.outboxService.createEvent({
       topic: KAFKA_TOPICS.INTERACTIONS,
       key: blogId,
-      payload: {
-        type: INTERACTION_TYPES.VIEW,
-        blogId,
-        userId: (currentUser?._id as string).toString() || 'anonymous',
-        timestamp: Date.now(),
-      },
+      payload: { type: INTERACTION_TYPES.VIEW, blogId, userId: userIdForEvent, timestamp: Date.now() },
     });
 
     return blog as IBlog;
@@ -146,7 +159,7 @@ export class BlogService {
       ? { [sort.split(':')[0]]: sort.split(':')[1] === 'desc' ? -1 : 1 }
       : { publishedAt: -1 };
 
-    const [data, total] = await Promise.all([
+    const [blogs, total] = await Promise.all([
       Blog.find(query)
         .populate('author', 'name')
         .sort(sortOptions)
@@ -156,7 +169,16 @@ export class BlogService {
       Blog.countDocuments(query),
     ]);
 
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const blogsWithUrls = await Promise.all(
+      blogs.map(async (blog) => {
+        if (blog.coverImageKey) {
+          (blog as any).coverImageUrl = await this.uploadService.getPresignedUrl(blog.coverImageKey);
+        }
+        return blog;
+      })
+    );
+
+    return { data: blogsWithUrls, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   /**
@@ -175,8 +197,16 @@ export class BlogService {
     const blogs = await Blog.find({ _id: { $in: trendingIds }, status: BLOG_STATUS.PUBLISHED })
       .populate('author', 'name')
       .lean();
+    const blogsWithUrls = await Promise.all(
+      blogs.map(async (blog) => {
+        if (blog.coverImageKey) {
+          (blog as any).coverImageUrl = await this.uploadService.getPresignedUrl(blog.coverImageKey);
+        }
+        return blog;
+      })
+    );
     // Preserve the order from Redis
-    const blogMap = new Map(blogs.map((b) => [b._id.toString(), b]));
+    const blogMap = new Map(blogsWithUrls.map((b) => [b._id.toString(), b]));
     return trendingIds.map((id) => blogMap.get(id)).filter(Boolean);
   }
 

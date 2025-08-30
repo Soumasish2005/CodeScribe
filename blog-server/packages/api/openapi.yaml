@@ -22,6 +22,8 @@ tags:
     description: User profile management.
   - name: Analytics
     description: Endpoints for platform and content analytics (Admin only).
+  - name: Uploads
+    description: Endpoints for file and asset management.
 
 paths:
   # -------------------------
@@ -36,13 +38,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterUserDto'
+              $ref: "#/components/schemas/RegisterUserDto"
       responses:
-        '201':
+        "201":
           description: User registered. Verification email sent.
-        '400':
+        "400":
           description: Validation error.
-        '409':
+        "409":
           description: User with this email already exists.
   /auth/login:
     post:
@@ -53,15 +55,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginUserDto'
+              $ref: "#/components/schemas/LoginUserDto"
       responses:
-        '200':
+        "200":
           description: Login successful. Returns user object and access token.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
           description: Invalid email or password.
   /auth/logout:
     post:
@@ -70,9 +72,9 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Logout successful.
-        '401':
+        "401":
           description: Unauthorized.
   /auth/refresh:
     post:
@@ -80,9 +82,9 @@ paths:
       summary: Get a new access token using a refresh token
       description: The refresh token must be sent in an httpOnly cookie.
       responses:
-        '200':
+        "200":
           description: Token refreshed successfully.
-        '401':
+        "401":
           description: Invalid or missing refresh token.
   # Add other auth paths like /forgot-password, /reset-password as needed...
 
@@ -98,16 +100,31 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateBlogDto'
+              type: object
+              properties:
+                coverImage:
+                  type: string
+                  format: binary
+                  description: The cover image for the blog post (optional).
+                title:
+                  type: string
+                content:
+                  type: string
+                  description: Markdown supported content.
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: A comma-separated string of tags.
       responses:
-        '201':
+        "201":
           description: Blog created successfully as a draft.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Blog'
+                $ref: "#/components/schemas/Blog"
   /blogs/search:
     get:
       tags: [Blogs]
@@ -128,12 +145,12 @@ paths:
           in: query
           schema: { type: integer, default: 10 }
       responses:
-        '200':
+        "200":
           description: A paginated list of blogs.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedBlogResponse'
+                $ref: "#/components/schemas/PaginatedBlogResponse"
   /blogs/trending:
     get:
       tags: [Blogs]
@@ -141,27 +158,27 @@ paths:
       parameters:
         - name: window
           in: query
-          schema: { type: string, enum: ['24h', '7d'], default: '24h' }
+          schema: { type: string, enum: ["24h", "7d"], default: "24h" }
         - name: limit
           in: query
           schema: { type: integer, default: 10 }
       responses:
-        '200':
+        "200":
           description: A list of trending blogs.
   /blogs/{id}:
     get:
       tags: [Blogs]
       summary: Get a single blog by ID
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       responses:
-        '200':
+        "200":
           description: Blog details.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Blog'
-        '404':
+                $ref: "#/components/schemas/Blog"
+        "404":
           description: Blog not found.
     patch:
       tags: [Blogs]
@@ -169,14 +186,25 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/UpdateBlogDto'
+              type: object
+              properties:
+                coverImage:
+                  type: string
+                  format: binary
+                  description: A new cover image to add or replace the existing one.
+                title:
+                  type: string
+                content:
+                  type: string
+                tags:
+                  type: string
       responses:
-        '200':
+        "200":
           description: Blog updated successfully.
   /blogs/{id}/submit:
     post:
@@ -185,9 +213,9 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       responses:
-        '200':
+        "200":
           description: Blog submitted.
   /blogs/{id}/like:
     post:
@@ -196,9 +224,9 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       responses:
-        '200':
+        "200":
           description: Like event queued.
   /blogs/{id}/unlike:
     post:
@@ -207,9 +235,9 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       responses:
-        '200':
+        "200":
           description: Unlike event queued.
   /blogs/{id}/comments:
     post:
@@ -218,14 +246,14 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCommentDto'
+              $ref: "#/components/schemas/CreateCommentDto"
       responses:
-        '201':
+        "201":
           description: Comment added.
   # -------------------------
   # Admin Paths
@@ -237,9 +265,9 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       responses:
-        '200':
+        "200":
           description: Blog approved and published.
   /blogs/admin/{id}/reject:
     post:
@@ -248,7 +276,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BlogId'
+        - $ref: "#/components/parameters/BlogId"
       requestBody:
         content:
           application/json:
@@ -258,7 +286,7 @@ paths:
                 rejectionReason:
                   type: string
       responses:
-        '200':
+        "200":
           description: Blog rejected.
   # -------------------------
   # Users Paths
@@ -270,12 +298,12 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: User profile data.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: "#/components/schemas/User"
     patch:
       tags: [Users]
       summary: Update current user's profile
@@ -285,10 +313,49 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserDto'
+              $ref: "#/components/schemas/UpdateUserDto"
       responses:
-        '200':
+        "200":
           description: Profile updated.
+
+# paths:
+# ... existing paths
+/uploads/image:
+  post:
+    tags: [Uploads]
+    summary: Upload an image for blog content
+    description: >
+      Uploads an image file for embedding within a blog post's content.
+      Returns the public URL of the uploaded image.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - image
+            properties:
+              image:
+                type: string
+                format: binary
+                description: The image file to upload.
+    responses:
+      '200':
+        description: Image uploaded successfully.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  example: "https://your-bucket.s3.region.amazonaws.com/image-name.jpg"
+      '400':
+        description: No file was uploaded.
 
 components:
   schemas:
@@ -297,9 +364,9 @@ components:
       type: object
       required: [name, email, password]
       properties:
-        name: { type: string, example: 'John Doe' }
-        email: { type: string, format: email, example: 'john.doe@example.com' }
-        password: { type: string, format: password, example: 'password123' }
+        name: { type: string, example: "John Doe" }
+        email: { type: string, format: email, example: "john.doe@example.com" }
+        password: { type: string, format: password, example: "password123" }
     LoginUserDto:
       type: object
       required: [email, password]
@@ -310,7 +377,7 @@ components:
       type: object
       properties:
         title: { type: string }
-        content: { type: string, description: 'Markdown supported content' }
+        content: { type: string, description: "Markdown supported content" }
         tags: { type: array, items: { type: string } }
     UpdateBlogDto:
       type: object
@@ -343,8 +410,15 @@ components:
         _id: { type: string }
         title: { type: string }
         content: { type: string }
-        author: { $ref: '#/components/schemas/User' }
+        author: { $ref: "#/components/schemas/User" }
         status: { type: string, enum: [draft, pending, published, rejected] }
+        coverImageUrl:
+          {
+            type: string,
+            format: uri,
+            nullable: true,
+            description: "URL of the cover image",
+          }
         tags: { type: array, items: { type: string } }
         likeCount: { type: integer }
         viewCount: { type: integer }
@@ -361,7 +435,7 @@ components:
         data:
           type: object
           properties:
-            user: { $ref: '#/components/schemas/User' }
+            user: { $ref: "#/components/schemas/User" }
             accessToken: { type: string }
     PaginatedBlogResponse:
       type: object
@@ -369,7 +443,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Blog'
+            $ref: "#/components/schemas/Blog"
         meta:
           type: object
           properties:

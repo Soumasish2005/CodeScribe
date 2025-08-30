@@ -8,7 +8,7 @@ export interface IBlog extends Document {
   content: string;
   author: Types.ObjectId;
   status: BlogStatus;
-  coverImageUrl?: string;
+  coverImageKey?: string;
   tags: string[];
   likeCount: number;
   viewCount: number;
@@ -28,7 +28,7 @@ const BlogSchema: Schema = new Schema(
       default: BLOG_STATUS.DRAFT,
       index: true,
     },
-    coverImageUrl: { type: String },
+    coverImageKey: { type: String, required: false },
     tags: [{ type: String, trim: true }],
     likeCount: { type: Number, default: 0 },
     viewCount: { type: Number, default: 0 },
