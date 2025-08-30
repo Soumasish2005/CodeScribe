@@ -81,8 +81,9 @@ export async function getBlog(id: string) {
   return apiFetch<any>(`/api/v1/blogs/${id}`)
 }
 
-export async function searchBlogs(params: { q?: string; tags?: string; page?: number; limit?: number }) {
-  return apiFetch<any>("/api/v1/blogs/search", { params })
+export async function searchBlogs(params: { q?: string; page?: number; limit?: number }) {
+  const res = await apiFetch<any>("/api/v1/blogs", { params })
+  return res.data
 }
 
 export async function getTrending(params: { window?: "24h" | "7d"; limit?: number }) {
@@ -101,6 +102,11 @@ export async function addComment(id: string, content: string) {
   return apiFetch<any>(`/api/v1/blogs/${id}/comments`, { method: "POST", auth: true, body: { content } })
 }
 
+export async function getUnpublishedBlogs(params: { page?: number; limit?: number }) {
+  const res = await apiFetch<any>("/api/v1/blogs/unpublished", { params })
+  return res.data
+}
+
 // ADMIN AND EDITING HELPERS
 export async function patchBlog(id: string, input: { title?: string; content?: string; tags?: string[] }) {
   return apiFetch<any>(`/api/v1/blogs/${id}`, { method: "PATCH", body: input, auth: true })
@@ -111,7 +117,7 @@ export async function submitBlog(id: string) {
 }
 
 export async function approveBlog(id: string) {
-  return apiFetch<any>(`/api/v1/blogs/admin/${id}/approve`, { method: "POST", auth: true })
+  await apiFetch<any>(`/api/v1/blogs/admin/${id}/approve`, { method: "POST", auth: true })
 }
 
 export async function rejectBlog(id: string, rejectionReason: string) {

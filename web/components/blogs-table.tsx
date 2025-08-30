@@ -2,7 +2,7 @@
 
 import useSWR from "swr"
 import { useState } from "react"
-import { searchBlogs, approveBlog, rejectBlog } from "@/lib/api"
+import { getUnpublishedBlogs, approveBlog, rejectBlog } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -21,14 +21,10 @@ export default function BlogsTable() {
   const [q, setQ] = useState("")
   const [page, setPage] = useState(1)
 
-  const { data, isLoading, mutate } = useSWR(
-    ["admin-blogs", q, page],
-    async () => {
-      const res = await searchBlogs({ q: q || undefined, page, limit: 10 })
-      return res
-    },
-    { keepPreviousData: true },
-  )
+  const { data, isLoading, mutate } = useSWR(["admin-unpublished-blogs", page], async () => {
+    const res = await getUnpublishedBlogs({ page, limit: 10 })
+    return res
+  })
 
   async function onApprove(id: string) {
     await approveBlog(id)
@@ -47,18 +43,7 @@ export default function BlogsTable() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <form
-          className="flex items-center gap-2"
-          onSubmit={(e) => {
-            e.preventDefault()
-            setPage(1)
-          }}
-        >
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title, content, tags..." />
-          <Button type="submit" variant="outline">
-            Search
-          </Button>
-        </form>
+        <div className="text-lg font-semibold">Unpublished Blogs</div>
         <div className="text-sm text-muted-foreground">
           Page {page} / {totalPages}
         </div>
