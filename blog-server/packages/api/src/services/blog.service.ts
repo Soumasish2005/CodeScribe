@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
 import { marked } from 'marked';
+import { ParsedQs } from 'qs';
 
 import { Blog, IBlog } from '../models/blog.model';
 import { Comment } from '../models/comment.model';
@@ -353,6 +354,37 @@ export class BlogService {
     ]);
 
     // Hydrate the list of blogs with their cover image URLs
+    const blogsWithUrls = await Promise.all(
+      blogs.map(async (blog) => {
+        if (blog.coverImageKey) {
+          (blog as any).coverImageUrl = await this.uploadService.getPresignedUrl(blog.coverImageKey);
+        }
+        return blog;
+      })
+    );
+
+    return { data: blogsWithUrls, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+  public async getUnpublishedBlogs(queryParams: ParsedQs) {
+    const page = parseInt(queryParams.page as string) || 1;
+    const limit = parseInt(queryParams.limit as string) || 10;
+
+    // The query finds all blogs where the status is in the specified array
+    const query = {
+      status: { $in: [BLOG_STATUS.DRAFT, BLOG_STATUS.PENDING] },
+    };
+
+    const [blogs, total] = await Promise.all([
+      Blog.find(query)
+        .populate('author', 'name')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Blog.countDocuments(query),
+    ]);
+
+    // Generate pre-signed URLs for the cover images
     const blogsWithUrls = await Promise.all(
       blogs.map(async (blog) => {
         if (blog.coverImageKey) {

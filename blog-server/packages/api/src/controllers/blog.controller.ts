@@ -146,4 +146,13 @@ export class BlogController {
       next(error);
     }
   };
+  public getUnpublishedBlogs = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // The query parameters for pagination will be passed to the service
+      const result = await this.blogService.getUnpublishedBlogs(req.query);
+      res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, 'Unpublished blogs fetched successfully', result));
+    } catch (error) {
+      next(error);
+    }
+  };
 }
