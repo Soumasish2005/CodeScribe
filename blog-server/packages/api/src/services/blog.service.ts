@@ -14,18 +14,30 @@ import { BLOG_STATUS, INTERACTION_TYPES, KAFKA_TOPICS, USER_ROLES } from '@devno
 import { CreateBlogDto, UpdateBlogDto, SearchBlogDto, CreateCommentDto } from '@devnovate/shared/dtos/blog.dto';
 import { BlogStatus } from '@devnovate/shared/types';
 import { IUser } from '../models/user.model';
+import { UploadService } from './upload.service';
 
 // Setup for server-side HTML sanitization against XSS
 const window = new JSDOM('').window;
 const DOMPurify = createDOMPurify(window as unknown as Window & typeof globalThis);
 
 export class BlogService {
-  constructor(private outboxService: OutboxService) {}
+  private uploadService = new UploadService();
+  constructor(private outboxService: OutboxService) {
+    this.uploadService = new UploadService();
+  }
 
   /**
    * Creates a new blog post as a draft.
    */
-  public async createBlog(blogData: CreateBlogDto, authorId: Types.ObjectId): Promise<IBlog> {
+  public async createBlog(
+    blogData: CreateBlogDto,
+    authorId: Types.ObjectId,
+    file?: Express.Multer.File
+  ): Promise<IBlog> {
+    let coverImageUrl: string | undefined;
+    if (file) {
+      coverImageUrl = await this.uploadService.uploadFile(file);
+    }
     const { title, content, tags } = blogData;
 
     // Sanitize Markdown content before saving to prevent XSS
@@ -38,6 +50,7 @@ export class BlogService {
       tags,
       author: authorId,
       status: BLOG_STATUS.DRAFT,
+      coverImageUrl,
     });
 
     await blog.save();

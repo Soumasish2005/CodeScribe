@@ -16,6 +16,12 @@ const config = {
   redis: {
     uri: process.env.REDIS_URL!,
   },
+  aws: {
+    bucketName: process.env.AWS_BUCKET_NAME!,
+    bucketRegion: process.env.AWS_BUCKET_REGION!,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
   kafka: {
     brokers: process.env.KAFKA_BROKERS?.split(','),
     clientId: process.env.KAFKA_CLIENT_ID,

@@ -22,7 +22,7 @@ export class BlogController {
   ) => {
     try {
       const authorId = req.user!._id as Types.ObjectId;
-      const blog = await this.blogService.createBlog(req.body, authorId);
+      const blog = await this.blogService.createBlog(req.body, authorId, req.file);
       res.status(StatusCodes.CREATED).json(new ApiResponse(StatusCodes.CREATED, 'Blog created successfully', blog));
     } catch (error) {
       next(error);

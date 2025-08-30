@@ -6,6 +6,7 @@ import { OutboxService } from '../services/outbox.service';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { rbacMiddleware } from '../middlewares/rbac.middleware';
 import { validateBody } from '../middlewares/validate.middleware';
+import { upload } from '../middlewares/upload.middleware';
 import {
   CreateBlogSchema,
   CreateCommentSchema,
@@ -29,8 +30,14 @@ router.get('/:id', blogController.getBlogById);
 // Authenticated user routes
 router.use(authMiddleware);
 
-router.post('/', idempotencyMiddleware, validateBody(CreateBlogSchema), blogController.createBlog);
-router.patch('/:id', validateBody(UpdateBlogSchema), blogController.updateBlog);
+router.post(
+  '/',
+  idempotencyMiddleware,
+  upload.single('coverImage'),
+  validateBody(CreateBlogSchema),
+  blogController.createBlog
+);
+router.patch('/:id', upload.single('coverImage'), validateBody(UpdateBlogSchema), blogController.updateBlog);
 router.post('/:id/submit', blogController.submitBlog);
 
 router.post('/:id/like', blogController.likeBlog);
