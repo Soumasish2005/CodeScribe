@@ -61,5 +61,11 @@ router.post(
   blogController.rejectBlog
 );
 router.delete('/admin/:id', rbacMiddleware([USER_ROLES.ADMIN]), blogController.deleteBlog);
+router.get(
+  '/admin/all',
+  rbacMiddleware([USER_ROLES.ADMIN]),
+  validateBody(SearchBlogSchema),
+  blogController.getAllBlogsAsAdmin
+);
 
 export default router;

@@ -138,4 +138,12 @@ export class BlogController {
       next(error);
     }
   };
+  public getAllBlogsAsAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await this.blogService.searchAllBlogsAsAdmin(req.query as unknown as SearchBlogDto);
+      res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, 'All blogs fetched for admin', result));
+    } catch (error) {
+      next(error);
+    }
+  };
 }

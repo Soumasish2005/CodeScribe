@@ -319,4 +319,49 @@ export class BlogService {
     await Blog.findByIdAndDelete(blogId);
     await Comment.deleteMany({ blog: blogId });
   }
+
+  // ... constructor and other methods
+
+  public async searchAllBlogsAsAdmin(queryParams: SearchBlogDto) {
+    const { q, tags, author, status, sort, page, limit } = queryParams;
+
+    // The main query object. Notice it does NOT have a default status.
+    const query: mongoose.FilterQuery<IBlog> = {};
+
+    // If the admin provides a status filter in the query, we use it.
+    // This allows them to filter for 'pending', 'draft', etc.
+    if (status) {
+      query.status = status;
+    }
+
+    if (q) query.$text = { $search: q };
+    if (tags) query.tags = { $in: typeof tags === 'string' ? tags.split(',') : tags };
+    if (author) query.author = author;
+
+    const sortOptions: { [key: string]: 1 | -1 } = sort
+      ? { [sort.split(':')[0]]: sort.split(':')[1] === 'desc' ? -1 : 1 }
+      : { createdAt: -1 }; // Default sort by creation date
+
+    const [blogs, total] = await Promise.all([
+      Blog.find(query)
+        .populate('author', 'name')
+        .sort(sortOptions)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Blog.countDocuments(query),
+    ]);
+
+    // Hydrate the list of blogs with their cover image URLs
+    const blogsWithUrls = await Promise.all(
+      blogs.map(async (blog) => {
+        if (blog.coverImageKey) {
+          (blog as any).coverImageUrl = await this.uploadService.getPresignedUrl(blog.coverImageKey);
+        }
+        return blog;
+      })
+    );
+
+    return { data: blogsWithUrls, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
 }
