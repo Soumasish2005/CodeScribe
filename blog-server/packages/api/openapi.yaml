@@ -1,0 +1,394 @@
+openapi: 3.1.0
+info:
+  title: Devnovate Blogging Platform API
+  version: 1.0.0
+  description: The complete REST API for managing blogs, users, and interactions on the Devnovate platform.
+  contact:
+    name: Devnovate Support
+    email: support@devnovate.com
+
+servers:
+  - url: /api/v1
+    description: Main API v1
+
+tags:
+  - name: Auth
+    description: User authentication and authorization.
+  - name: Blogs
+    description: Public and user-specific operations for blogs and interactions.
+  - name: Admin
+    description: Administrative and moderation actions.
+  - name: Users
+    description: User profile management.
+  - name: Analytics
+    description: Endpoints for platform and content analytics (Admin only).
+
+paths:
+  # -------------------------
+  # Auth Paths
+  # -------------------------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserDto'
+      responses:
+        '201':
+          description: User registered. Verification email sent.
+        '400':
+          description: Validation error.
+        '409':
+          description: User with this email already exists.
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUserDto'
+      responses:
+        '200':
+          description: Login successful. Returns user object and access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid email or password.
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful.
+        '401':
+          description: Unauthorized.
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Get a new access token using a refresh token
+      description: The refresh token must be sent in an httpOnly cookie.
+      responses:
+        '200':
+          description: Token refreshed successfully.
+        '401':
+          description: Invalid or missing refresh token.
+  # Add other auth paths like /forgot-password, /reset-password as needed...
+
+  # -------------------------
+  # Blogs Paths
+  # -------------------------
+  /blogs:
+    post:
+      tags: [Blogs]
+      summary: Create a new blog post
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlogDto'
+      responses:
+        '201':
+          description: Blog created successfully as a draft.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blog'
+  /blogs/search:
+    get:
+      tags: [Blogs]
+      summary: Search and filter published blogs
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Full-text search query.
+        - name: tags
+          in: query
+          schema: { type: string }
+          description: Comma-separated list of tags.
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: A paginated list of blogs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBlogResponse'
+  /blogs/trending:
+    get:
+      tags: [Blogs]
+      summary: Get trending blogs
+      parameters:
+        - name: window
+          in: query
+          schema: { type: string, enum: ['24h', '7d'], default: '24h' }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: A list of trending blogs.
+  /blogs/{id}:
+    get:
+      tags: [Blogs]
+      summary: Get a single blog by ID
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      responses:
+        '200':
+          description: Blog details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blog'
+        '404':
+          description: Blog not found.
+    patch:
+      tags: [Blogs]
+      summary: Update a blog post
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBlogDto'
+      responses:
+        '200':
+          description: Blog updated successfully.
+  /blogs/{id}/submit:
+    post:
+      tags: [Blogs]
+      summary: Submit a draft blog for approval
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      responses:
+        '200':
+          description: Blog submitted.
+  /blogs/{id}/like:
+    post:
+      tags: [Blogs]
+      summary: Like a blog post
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      responses:
+        '200':
+          description: Like event queued.
+  /blogs/{id}/unlike:
+    post:
+      tags: [Blogs]
+      summary: Unlike a blog post
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      responses:
+        '200':
+          description: Unlike event queued.
+  /blogs/{id}/comments:
+    post:
+      tags: [Blogs]
+      summary: Add a comment to a blog
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentDto'
+      responses:
+        '201':
+          description: Comment added.
+  # -------------------------
+  # Admin Paths
+  # -------------------------
+  /blogs/admin/{id}/approve:
+    post:
+      tags: [Admin]
+      summary: Approve a pending blog
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      responses:
+        '200':
+          description: Blog approved and published.
+  /blogs/admin/{id}/reject:
+    post:
+      tags: [Admin]
+      summary: Reject a pending blog
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BlogId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejectionReason:
+                  type: string
+      responses:
+        '200':
+          description: Blog rejected.
+  # -------------------------
+  # Users Paths
+  # -------------------------
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      tags: [Users]
+      summary: Update current user's profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        '200':
+          description: Profile updated.
+
+components:
+  schemas:
+    # DTOs
+    RegisterUserDto:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, example: 'John Doe' }
+        email: { type: string, format: email, example: 'john.doe@example.com' }
+        password: { type: string, format: password, example: 'password123' }
+    LoginUserDto:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    CreateBlogDto:
+      type: object
+      properties:
+        title: { type: string }
+        content: { type: string, description: 'Markdown supported content' }
+        tags: { type: array, items: { type: string } }
+    UpdateBlogDto:
+      type: object
+      properties:
+        title: { type: string }
+        content: { type: string }
+        tags: { type: array, items: { type: string } }
+    CreateCommentDto:
+      type: object
+      properties:
+        content: { type: string }
+    UpdateUserDto:
+      type: object
+      properties:
+        name: { type: string }
+
+    # Models
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        roles: { type: array, items: { type: string, enum: [user, admin] } }
+        isVerified: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    Blog:
+      type: object
+      properties:
+        _id: { type: string }
+        title: { type: string }
+        content: { type: string }
+        author: { $ref: '#/components/schemas/User' }
+        status: { type: string, enum: [draft, pending, published, rejected] }
+        tags: { type: array, items: { type: string } }
+        likeCount: { type: integer }
+        viewCount: { type: integer }
+        commentCount: { type: integer }
+        publishedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+
+    # Responses
+    LoginResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            user: { $ref: '#/components/schemas/User' }
+            accessToken: { type: string }
+    PaginatedBlogResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Blog'
+        meta:
+          type: object
+          properties:
+            page: { type: integer }
+            limit: { type: integer }
+            total: { type: integer }
+            totalPages: { type: integer }
+
+  parameters:
+    BlogId:
+      name: id
+      in: path
+      required: true
+      description: The ID of the blog post.
+      schema:
+        type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
