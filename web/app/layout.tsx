@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/logo-ttl.png" type="image/png" />
+        <link rel="icon" href="../public/logo-ttl.png" type="image/png" />
         <title>CodeScribe</title>
         <meta name="description" content="AI-powered blog writing and publishing platform." />
       </head>
