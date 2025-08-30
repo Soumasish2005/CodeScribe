@@ -28,3 +28,7 @@ lerna-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+#CA certificates
+
+ca.pem
