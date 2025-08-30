@@ -365,7 +365,7 @@ components:
       required: [name, email, password]
       properties:
         name: { type: string, example: "John Doe" }
-        email: { type: string, format: email, example: "john.doe@example.com" }
+        email: { type: string, format: email, example: "kamilyaprasun4@gmail.com" }
         password: { type: string, format: password, example: "password123" }
     LoginUserDto:
       type: object

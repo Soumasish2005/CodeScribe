@@ -17,7 +17,7 @@ export class UploadController {
       if (!req.file) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'No image file uploaded');
       }
-      const imageUrl = await this.uploadService.uploadFile(req.file);
+      const imageUrl = await this.uploadService.uploadPublicFile(req.file);
       res
         .status(StatusCodes.OK)
         .json(new ApiResponse(StatusCodes.OK, 'Image uploaded successfully', { url: imageUrl }));
