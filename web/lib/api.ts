@@ -85,6 +85,10 @@ export async function searchBlogs(params: { q?: string; tags?: string; page?: nu
   return apiFetch<any>("/api/v1/blogs/search", { params })
 }
 
+export async function getBlogs() {
+  return apiFetch<any>("/api/v1/blogs/admin", { auth: true })
+}
+
 export async function getTrending(params: { window?: "24h" | "7d"; limit?: number }) {
   return apiFetch<any>("/api/v1/blogs/trending", { params })
 }
