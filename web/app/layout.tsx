@@ -8,9 +8,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "CodeScribe",
+  description: "AI-powered blog writing and publishing platform.",
 }
 
 export default function RootLayout({
@@ -20,6 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/logo-ttl.png" type="image/png" />
+        <title>CodeScribe</title>
+        <meta name="description" content="AI-powered blog writing and publishing platform." />
+      </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
