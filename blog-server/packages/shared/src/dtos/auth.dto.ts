@@ -5,12 +5,12 @@ export const RegisterUserSchema = z.object({
   name: z.string().min(3).max(50),
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
+  role: z.enum(['user', 'admin']).default('user'),
 });
 export class RegisterUserDto {
   name!: string;
   email!: string;
   password!: string;
-
   static validate(data: unknown) {
     return RegisterUserSchema.parse(data);
   }

@@ -37,7 +37,7 @@ const UserSchema: Schema = new Schema(
       {
         type: String,
         enum: Object.values(USER_ROLES),
-        default: USER_ROLES.USER,
+        default: [USER_ROLES.USER],
       },
     ],
     isVerified: { type: Boolean, default: false },
