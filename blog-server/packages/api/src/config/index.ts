@@ -8,7 +8,7 @@ const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.API_PORT || '4000', 10),
   host: process.env.API_HOST || '0.0.0.0',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  corsOrigin: process.env.CORS_ORIGIN || 'https://code-scribe-wzzb.vercel.app',
   apiPrefix: process.env.API_PREFIX || '/api/v1',
   mongo: {
     uri: process.env.MONGO_URI!,
