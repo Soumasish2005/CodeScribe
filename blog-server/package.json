@@ -7,10 +7,11 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=api & npm run dev --workspace=worker",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=@devnovate/shared && npm run build --workspaces --if-present",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "test": "npm test --workspaces"
+    "test": "npm test --workspaces",
+    "make-admin": "node dist-scripts/make-admin.js"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
@@ -31,6 +32,7 @@
     "@aws-sdk/client-s3": "^3.879.0",
     "@aws-sdk/s3-request-presigner": "^3.879.0",
     "jsdom": "^26.1.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "@devnovate/shared": "1.0.0"
   }
 }

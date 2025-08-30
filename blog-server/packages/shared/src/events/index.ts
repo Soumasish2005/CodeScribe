@@ -1,5 +1,5 @@
 // packages/shared/src/events/index.ts
-import { INTERACTION_TYPES } from '../../constants';
+import { INTERACTION_TYPES } from '../constants';
 
 type InteractionType = (typeof INTERACTION_TYPES)[keyof typeof INTERACTION_TYPES];
 

@@ -13,7 +13,7 @@ import { redisClient } from '../redis';
 import { BLOG_STATUS, INTERACTION_TYPES, KAFKA_TOPICS, USER_ROLES } from '@devnovate/shared/constants';
 import { CreateBlogDto, UpdateBlogDto, SearchBlogDto, CreateCommentDto } from '@devnovate/shared/dtos/blog.dto';
 import { BlogStatus } from '@devnovate/shared/types';
-import { IUser } from '../models/user.model';
+import { IUser as ISharedUser } from '@devnovate/shared/types';
 import { UploadService } from './upload.service';
 
 // Setup for server-side HTML sanitization against XSS
@@ -118,7 +118,7 @@ export class BlogService {
    * Fetches a single blog post by its ID. It also queues a 'VIEW' event.
    * Only returns published posts unless the requester is the author or an admin.
    */
-  public async getBlogById(blogId: string, currentUser?: IUser | null): Promise<IBlog> {
+  public async getBlogById(blogId: string, currentUser?: ISharedUser | null): Promise<IBlog> {
     const blog = await Blog.findById(blogId).populate('author', 'name').lean();
     if (!blog) throw new ApiError(StatusCodes.NOT_FOUND, 'Blog not found');
 

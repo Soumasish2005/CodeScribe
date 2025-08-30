@@ -3,15 +3,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import { USER_ROLES } from '@devnovate/shared/constants';
-import { UserRole } from '@devnovate/shared/types';
+import { IUser as ISharedUser } from '@devnovate/shared/types'; // Import from shared
 import config from '../config';
 
-export interface IUser extends Document {
-  name: string;
-  email: string;
+// Extend the shared interface to add Mongoose Document properties and methods
+export interface IUser extends ISharedUser, Omit<Document, '_id'> {
   password?: string;
-  roles: UserRole[];
-  isVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationTokenExpires?: Date;
   passwordResetToken?: string;
@@ -33,13 +30,11 @@ const UserSchema: Schema = new Schema(
       index: true,
     },
     password: { type: String, required: true, select: false },
-    roles: [
-      {
-        type: String,
-        enum: Object.values(USER_ROLES),
-        default: [USER_ROLES.USER],
-      },
-    ],
+    roles: {
+      type: [String],
+      enum: Object.values(USER_ROLES),
+      default: [USER_ROLES.USER],
+    },
     isVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, select: false },
     emailVerificationTokenExpires: { type: Date, select: false },
@@ -67,14 +62,14 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
 UserSchema.methods.createEmailVerificationToken = function (): string {
   const token = crypto.randomBytes(32).toString('hex');
   this.emailVerificationToken = crypto.createHash('sha256').update(token).digest('hex');
-  this.emailVerificationTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.emailVerificationTokenExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   return token;
 };
 
 UserSchema.methods.createPasswordResetToken = function (): string {
   const resetToken = crypto.randomBytes(32).toString('hex');
   this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.passwordResetTokenExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   return resetToken;
 };
 

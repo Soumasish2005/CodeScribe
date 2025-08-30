@@ -70,7 +70,7 @@ export class AuthService {
       throw new ApiError(StatusCodes.FORBIDDEN, 'Please verify your email address before logging in.');
     }
 
-    const { accessToken, refreshToken } = this.generateTokens(user._id as string);
+    const { accessToken, refreshToken } = this.generateTokens(user._id.toString());
 
     // Remove password from the user object before returning
     const userObject = user.toObject();
@@ -125,7 +125,7 @@ export class AuthService {
       }
 
       // Issue a new pair of tokens
-      return this.generateTokens(user._id as string);
+      return this.generateTokens(user._id.toString());
     } catch (error) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid or expired refresh token');
     }

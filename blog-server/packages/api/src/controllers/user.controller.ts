@@ -16,7 +16,7 @@ export class UserController {
   public getMyProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
       // The user object is attached by the authMiddleware, so we can be confident it exists.
-      const userProfile = await this.userService.getUserById(req.user!._id as string);
+      const userProfile = await this.userService.getUserById(req.user!._id.toString());
       res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, 'Profile fetched successfully', userProfile));
     } catch (error) {
       next(error);
@@ -34,7 +34,7 @@ export class UserController {
     next: NextFunction
   ) => {
     try {
-      const updatedUser = await this.userService.updateUser(req.user!._id as string, req.body);
+      const updatedUser = await this.userService.updateUser(req.user!._id.toString(), req.body);
       res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, 'Profile updated successfully', updatedUser));
     } catch (error) {
       next(error);
