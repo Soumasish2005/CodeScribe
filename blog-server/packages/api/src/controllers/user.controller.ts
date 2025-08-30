@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { UserService } from '../services/user.service';
 import { ApiResponse } from '../utils/apiResponse';
-import { UpdateUserDto } from '@devnovate/shared/dtos/user.dto';
+import { AdminCreateUserDto, UpdateUserDto } from '@devnovate/shared/dtos/user.dto';
 
 export class UserController {
   constructor(private userService: UserService) {}
@@ -40,4 +40,13 @@ export class UserController {
       next(error);
     }
   };
+  public createUserByAdmin = async (req: Request<{}, any, AdminCreateUserDto>, res: Response, next: NextFunction) => {
+    try {
+      const newUser = await this.userService.createUserByAdmin(req.body);
+      res.status(StatusCodes.CREATED).json(new ApiResponse(StatusCodes.CREATED, 'User created by admin successfully', newUser));
+    } catch (error) {
+      next(error);
+    }
+  };
+
 }
