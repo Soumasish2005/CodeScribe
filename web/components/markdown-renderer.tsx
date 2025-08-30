@@ -17,18 +17,20 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
           ul: (p) => <ul className="list-disc pl-6 my-4 space-y-1" {...p} />,
           ol: (p) => <ol className="list-decimal pl-6 my-4 space-y-1" {...p} />,
           blockquote: (p) => <blockquote className="border-l-4 pl-4 italic my-4" {...p} />,
-          code: ({ inline, className, children, ...props }) =>
-            inline ? (
-              <code className="rounded bg-muted px-1 py-0.5 text-sm" {...props}>
+          code: (props: { inline?: boolean; className?: string; children?: React.ReactNode } & React.HTMLAttributes<HTMLElement>) => {
+            const { inline, className, children, ...rest } = props;
+            return inline ? (
+              <code className="rounded bg-muted px-1 py-0.5 text-sm" {...rest}>
                 {children}
               </code>
             ) : (
               <pre className="rounded bg-muted p-4 overflow-x-auto">
-                <code className={className} {...props}>
+                <code className={className} {...rest}>
                   {children}
                 </code>
               </pre>
-            ),
+            );
+          },
           img: (p) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img {...p} alt={p.alt || ""} className="rounded border my-4" />

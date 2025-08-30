@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE =
   (typeof window !== "undefined" && (window as any).__API_BASE__) || process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
